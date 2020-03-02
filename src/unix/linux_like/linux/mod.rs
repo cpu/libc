@@ -477,6 +477,21 @@ s! {
         pub len: u32
     }
 
+    pub struct fanotify_event_metadata {
+        pub len: u32,
+        pub vers: u8,
+        pub reserved: u8,
+        pub metadata_len: u16,
+        pub mask_align: u64,
+        pub fd: ::c_int,
+        pub pid: ::c_int,
+    }
+
+    pub struct fanotify_response {
+        pub fd: ::c_int,
+        pub response: u32,
+    }
+
     pub struct sockaddr_vm {
         pub svm_family: ::sa_family_t,
         pub svm_reserved1: ::c_ushort,
@@ -2417,6 +2432,81 @@ pub const IN_ALL_EVENTS: u32 = IN_ACCESS
 pub const IN_CLOEXEC: ::c_int = O_CLOEXEC;
 pub const IN_NONBLOCK: ::c_int = O_NONBLOCK;
 
+// uapi/linux/fanotify.h
+pub const FAN_ACCESS: ::c_ulonglong = 0x0000_0001;
+pub const FAN_MODIFY: ::c_ulonglong = 0x0000_0002;
+pub const FAN_CLOSE_WRITE: ::c_ulonglong = 0x0000_0008;
+pub const FAN_CLOSE_NOWRITE: ::c_ulonglong = 0x0000_0010;
+pub const FAN_OPEN: ::c_ulonglong = 0x0000_0020;
+
+pub const FAN_Q_OVERFLOW: ::c_ulonglong = 0x0000_4000;
+
+pub const FAN_OPEN_PERM: ::c_ulonglong = 0x0001_0000;
+pub const FAN_ACCESS_PERM: ::c_ulonglong = 0x0002_0000;
+
+pub const FAN_ONDIR: ::c_ulonglong = 0x4000_0000;
+
+pub const FAN_EVENT_ON_CHILD: ::c_ulonglong = 0x0800_0000;
+
+pub const FAN_CLOSE: ::c_ulonglong = FAN_CLOSE_WRITE | FAN_CLOSE_NOWRITE;
+
+pub const FAN_CLOEXEC: ::c_int = 0x0000_0001;
+pub const FAN_NONBLOCK: ::c_int = 0x0000_0002;
+
+pub const FAN_CLASS_NOTIF: ::c_int = 0x0000_0000;
+pub const FAN_CLASS_CONTENT: ::c_int = 0x0000_0004;
+pub const FAN_CLASS_PRE_CONTENT: ::c_int = 0x0000_0008;
+pub const FAN_ALL_CLASS_BITS: ::c_int =
+    FAN_CLASS_NOTIF | FAN_CLASS_CONTENT | FAN_CLASS_PRE_CONTENT;
+
+pub const FAN_UNLIMITED_QUEUE: ::c_int = 0x0000_0010;
+pub const FAN_UNLIMITED_MARKS: ::c_int = 0x0000_0020;
+
+pub const FAN_ALL_INIT_FLAGS: ::c_int = FAN_CLOEXEC
+    | FAN_NONBLOCK
+    | FAN_ALL_CLASS_BITS
+    | FAN_UNLIMITED_QUEUE
+    | FAN_UNLIMITED_MARKS;
+
+pub const FAN_MARK_ADD: ::c_int = 0x0000_0001;
+pub const FAN_MARK_REMOVE: ::c_int = 0x0000_0002;
+pub const FAN_MARK_DONT_FOLLOW: ::c_int = 0x0000_0004;
+pub const FAN_MARK_ONLYDIR: ::c_int = 0x0000_0008;
+pub const FAN_MARK_INODE: ::c_int = 0x0000_0000;
+pub const FAN_MARK_MOUNT: ::c_int = 0x0000_0010;
+// NOTE: FAN_MARK_FILESYSTEM requires Linux Kernel >= 4.20.0
+pub const FAN_MARK_FILESYSTEM: ::c_int = 0x0000_0100;
+pub const FAN_MARK_IGNORED_MASK: ::c_int = 0x0000_0020;
+pub const FAN_MARK_IGNORED_SURV_MODIFY: ::c_int = 0x0000_0040;
+pub const FAN_MARK_FLUSH: ::c_int = 0x0000_0080;
+
+pub const FAN_MARK_TYPE_MASK: ::c_int =
+    FAN_MARK_INODE | FAN_MARK_MOUNT | FAN_MARK_FILESYSTEM;
+
+pub const FAN_ALL_MARK_FLAGS: ::c_int = FAN_MARK_ADD
+    | FAN_MARK_REMOVE
+    | FAN_MARK_DONT_FOLLOW
+    | FAN_MARK_ONLYDIR
+    | FAN_MARK_IGNORED_MASK
+    | FAN_MARK_IGNORED_SURV_MODIFY
+    | FAN_MARK_FLUSH
+    | FAN_MARK_TYPE_MASK;
+
+pub const FAN_ALL_EVENTS: ::c_ulonglong =
+    FAN_ACCESS | FAN_MODIFY | FAN_CLOSE | FAN_OPEN;
+
+pub const FAN_ALL_PERM_EVENTS: ::c_ulonglong = FAN_OPEN_PERM | FAN_ACCESS_PERM;
+
+pub const FAN_ALL_OUTGOING_EVENTS: ::c_ulonglong =
+    FAN_ALL_EVENTS | FAN_ALL_PERM_EVENTS | FAN_Q_OVERFLOW;
+
+pub const FANOTIFY_METADATA_VERSION: u8 = 3;
+
+pub const FAN_ALLOW: u32 = 0x01;
+pub const FAN_DENY: u32 = 0x02;
+
+pub const FAN_NOFD: ::c_int = 1;
+
 pub const FUTEX_WAIT: ::c_int = 0;
 pub const FUTEX_WAKE: ::c_int = 1;
 pub const FUTEX_FD: ::c_int = 2;
@@ -3327,6 +3417,14 @@ extern "C" {
         fd: ::c_int,
         path: *const ::c_char,
         mask: u32,
+    ) -> ::c_int;
+    pub fn fanotify_init(flags: ::c_int, event_f_flags: ::c_int) -> ::c_int;
+    pub fn fanotify_mark(
+        fd: ::c_int,
+        flags: ::c_int,
+        mask: ::c_ulonglong,
+        dirfd: ::c_int,
+        path: *const ::c_char,
     ) -> ::c_int;
 }
 
